@@ -24,13 +24,22 @@ class Saman extends PortAbstract implements PortInterface
      * @var string
      */
 
-    protected $serverVerifyUrl = "https://sep.shaparak.ir/payments/referencepayment.asmx?WSDL";
+//    protected $serverVerifyUrl = "https://sep.shaparak.ir/payments/referencepayment.asmx?WSDL";
+    protected $serverVerifyUrl = "http://banktest.ir/gateway/saman/payments/referencepayment?wsdl";
 
-    protected $gateUrl = "https://sep.shaparak.ir/Payment.aspx";
+//    protected $gateUrl = "https://sep.shaparak.ir/Payment.aspx";
+    protected $gateUrl = "http://banktest.ir/gateway/saman/gate";
 
     /**
      * {@inheritdoc}
      */
+    protected $user ;
+    protected $saman = [];
+    public function __construct($user)
+    {
+        parent::__construct();
+        $this->saman = DB::table('saman')->where('user_id' ,'=',$user->id)->first() ;
+    }
     public function set($amount)
     {
         $this->amount = $amount;
@@ -68,7 +77,7 @@ class Saman extends PortAbstract implements PortInterface
     {
         $main_data = [
             'amount'        => $this->amount,
-            'merchant'      => $this->config->get('gateway.saman.merchant'),
+            'merchant'      => $this->saman->merchant,
             'resNum'        => $this->transactionId(),
             'callBackUrl'   => $this->getCallback()
         ];
@@ -108,7 +117,7 @@ class Saman extends PortAbstract implements PortInterface
     function getCallback()
     {
         if (!$this->callbackUrl)
-            $this->callbackUrl = $this->config->get('gateway.saman.callback-url');
+            $this->callbackUrl = $this->saman->callback_url ;
 
         $url = $this->makeCallback($this->callbackUrl, ['transaction_id' => $this->transactionId()]);
 
@@ -159,9 +168,9 @@ class Saman extends PortAbstract implements PortInterface
     protected function verifyPayment()
     {
         $fields = array(
-            "merchantID" => $this->config->get('gateway.saman.merchant'),
+            "merchantID" => $this->saman->merchant,
             "RefNum" => $this->refId,
-            "password" => $this->config->get('gateway.saman.password'),
+            "password" =>  $this->saman->password,
         );
 
         try {

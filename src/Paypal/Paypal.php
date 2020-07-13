@@ -27,7 +27,13 @@ class Paypal extends PortAbstract implements PortInterface
     protected $shipmentPrice;
     protected $redirectUrl;
 
-
+    protected $user ;
+    protected $payPal = [];
+    public function __construct($user)
+    {
+        parent::__construct();
+        $this->payPal = DB::table('payPal')->where('user_id' ,'=',$user->id)->first() ;
+    }
 
     /**
      * {@inheritdoc}
@@ -62,16 +68,30 @@ class Paypal extends PortAbstract implements PortInterface
     function getCallback()
     {
         if (!$this->callbackUrl)
-            $this->callbackUrl = $this->config->get('gateway.paypal.settings.call_back_url');
+            $this->callbackUrl = $this->payPal->s_callback_url;
 
         return $this->makeCallback($this->callbackUrl, ['transaction_id' => $this->transactionId()]);
     }
 
     public function setApiContext()
     {
-        $paypal_conf = $this->config->get('gateway.paypal');
-        $this->_api_context = new ApiContext(new OAuthTokenCredential($paypal_conf['client_id'], $paypal_conf['secret']));
-        $this->_api_context->setConfig($paypal_conf['settings']);
+        $settings =  [
+        'mode'                   => $this->payPal->s_mode, //'sandbox' or 'live'
+        'http.ConnectionTimeOut' => $this->payPal->s_connection_timeout,
+        'log.LogEnabled'         => $this->payPal->s_log_enable,
+        'log.FileName'           => storage_path() . $this->payPal->s_file_name,
+        /**
+         * Available option 'FINE', 'INFO', 'WARN' or 'ERROR'
+         *
+         * Logging is most verbose in the 'FINE' level and decreases as you
+         * proceed towards ERROR
+         */
+        'call_back_url'          => $this->payPal->s_callback_url,
+        'log.LogLevel'           => $this->payPal->s_log_level
+
+    ];
+        $this->_api_context = new ApiContext(new OAuthTokenCredential($this->payPal->clientId, $this->payPal->secret));
+        $this->_api_context->setConfig($settings);
     }
 
     public function setShipmentPrice($shipmentPrice)
@@ -236,7 +256,7 @@ class Paypal extends PortAbstract implements PortInterface
 
     public function getProductName(){
         if(!$this->productName){
-            return $this->config->get('gateway.paypal.default_product_name');
+            return $this->payPal->default_product_name ;
         }
 
         return $this->productName;
@@ -244,7 +264,7 @@ class Paypal extends PortAbstract implements PortInterface
 
     public function getShipmentPrice(){
         if(!$this->shipmentPrice){
-            return $this->config->get('gateway.paypal.default_shipment_price');
+            return $this->payPal->default_shipment_price ;
         }
 
         return $this->shipmentPrice;

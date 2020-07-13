@@ -21,6 +21,13 @@ class Mellat extends PortAbstract implements PortInterface
 	/**
 	 * {@inheritdoc}
 	 */
+    protected $user ;
+    protected $mellat = [];
+    public function __construct($user)
+    {
+        parent::__construct();
+        $this->mellat = DB::table('mellat')->where('user_id' ,'=',$user->id)->first() ;
+    }
 	public function set($amount)
 	{
 		$this->amount = $amount;
@@ -79,7 +86,7 @@ class Mellat extends PortAbstract implements PortInterface
 	function getCallback()
 	{
 		if (!$this->callbackUrl)
-			$this->callbackUrl = $this->config->get('gateway.mellat.callback-url');
+			$this->callbackUrl = $this->mellat->callback_url ;
 
 		return $this->makeCallback($this->callbackUrl, ['transaction_id' => $this->transactionId()]);
 	}
@@ -98,9 +105,9 @@ class Mellat extends PortAbstract implements PortInterface
 		$this->newTransaction();
 
 		$fields = array(
-			'terminalId' => $this->config->get('gateway.mellat.terminalId'),
-			'userName' => $this->config->get('gateway.mellat.username'),
-			'userPassword' => $this->config->get('gateway.mellat.password'),
+			'terminalId' => $this->mellat->terminalId,
+			'userName' => $this->mellat->userName,
+			'userPassword' => $this->mellat->userPassword,
 			'orderId' => $this->transactionId(),
 			'amount' => $this->amount,
 			'localDate' => $dateTime->format('Ymd'),
@@ -165,9 +172,9 @@ class Mellat extends PortAbstract implements PortInterface
 	protected function verifyPayment()
 	{
 		$fields = array(
-			'terminalId' => $this->config->get('gateway.mellat.terminalId'),
-			'userName' => $this->config->get('gateway.mellat.username'),
-			'userPassword' => $this->config->get('gateway.mellat.password'),
+			'terminalId' => $this->mellat->terminalId,
+			'userName' => $this->mellat->userName,
+			'userPassword' => $this->mellat->userPassword,
 			'orderId' => $this->transactionId(),
 			'saleOrderId' => $this->transactionId(),
 			'saleReferenceId' => $this->trackingCode()
@@ -203,9 +210,9 @@ class Mellat extends PortAbstract implements PortInterface
 	protected function settleRequest()
 	{
 		$fields = array(
-			'terminalId' => $this->config->get('gateway.mellat.terminalId'),
-			'userName' => $this->config->get('gateway.mellat.username'),
-			'userPassword' => $this->config->get('gateway.mellat.password'),
+            'terminalId' => $this->mellat->terminalId,
+            'userName' => $this->mellat->userName,
+            'userPassword' => $this->mellat->userPassword,
 			'orderId' => $this->transactionId(),
 			'saleOrderId' => $this->transactionId(),
 			'saleReferenceId' => $this->trackingCode

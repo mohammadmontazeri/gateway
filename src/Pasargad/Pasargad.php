@@ -27,6 +27,13 @@ class Pasargad extends PortAbstract implements PortInterface
      */
     protected $gateUrl = 'https://pep.shaparak.ir/gateway.aspx';
 
+    protected $user ;
+    protected $pasargad = [];
+    public function __construct($user)
+    {
+        parent::__construct();
+        $this->pasargad = DB::table('pasargad')->where('user_id' ,'=',$user->id)->first() ;
+    }
     /**
      * {@inheritdoc}
      */
@@ -52,14 +59,14 @@ class Pasargad extends PortAbstract implements PortInterface
     public function redirect()
     {
 
-        $processor = new RSAProcessor($this->config->get('gateway.pasargad.certificate-path'), RSAKeyType::XMLFile);
+        $processor = new RSAProcessor($this->pasargad->certificate_path, RSAKeyType::XMLFile);
 
         $url = $this->gateUrl;
         $redirectUrl = $this->getCallback();
         $invoiceNumber = $this->transactionId();
         $amount = $this->amount;
-        $terminalCode = $this->config->get('gateway.pasargad.terminalId');
-        $merchantCode = $this->config->get('gateway.pasargad.merchantId');
+        $terminalCode = $this->pasargad->terminalId ;
+        $merchantCode = $this->pasargad->merchantId ;
         $timeStamp = date("Y/m/d H:i:s");
         $invoiceDate = date("Y/m/d H:i:s");
         $action = 1003;
@@ -101,7 +108,7 @@ class Pasargad extends PortAbstract implements PortInterface
     function getCallback()
     {
         if (!$this->callbackUrl)
-            $this->callbackUrl = $this->config->get('gateway.pasargad.callback-url');
+            $this->callbackUrl = $this->pasargad->callback_url ;
 
         return $this->callbackUrl;
     }
@@ -155,9 +162,9 @@ class Pasargad extends PortAbstract implements PortInterface
      */
     protected function callVerifyPayment($data)
     {
-        $processor = new RSAProcessor($this->config->get('gateway.pasargad.certificate-path'), RSAKeyType::XMLFile);
-        $merchantCode = $this->config->get('gateway.pasargad.merchantId');
-        $terminalCode = $this->config->get('gateway.pasargad.terminalId');
+        $processor = new RSAProcessor($this->pasargad->certificate_path, RSAKeyType::XMLFile);
+        $merchantCode = $this->pasargad->merchantId ;
+        $terminalCode = $this->pasargad->terminalId ;
         $invoiceNumber = $data['invoiceNumber'];
         $invoiceDate = $data['invoiceDate'];
         $timeStamp = date("Y/m/d H:i:s");
